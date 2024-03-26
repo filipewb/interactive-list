@@ -1,4 +1,4 @@
-import Animated, { SharedValue, runOnJS, useSharedValue, useAnimatedStyle } from "react-native-reanimated";
+import Animated, { SharedValue, runOnJS, useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { CARD_HEIGHT, Card, CardProps } from "../Card";
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useState } from "react";
@@ -30,12 +30,17 @@ export function MovableCard({ data, cardsPosition, scrollY, cardsCount }: Props)
     .onUpdate((event) => {
       top.value = event.absoluteY + scrollY.value;
     })
+    .onFinalize(() => {
+      runOnJS(setMoving)(false);
+    })
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      top: top.value - CARD_HEIGHT
+      top: top.value - CARD_HEIGHT,
+      zIndex: moving ? 1 : 0,
+      opacity: withSpring(moving ? 1 : 0.4),
     }
-  })
+  }, [moving]);
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
