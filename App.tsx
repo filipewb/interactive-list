@@ -8,8 +8,8 @@ export default function App() {
       style={{ flex: 1 }}
     >
       <StatusBar
-        barStyle="light-content"
-        backgroundColor='transparent'
+        style='auto'
+        backgroundColor='#222'
         translucent
       />
 
