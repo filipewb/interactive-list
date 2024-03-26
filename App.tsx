@@ -1,20 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { List } from './src/screens/List';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open !</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+    <GestureHandlerRootView
+      style={{ flex: 1 }}
+    >
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor='transparent'
+        translucent
+      />
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+      <List />
+    </GestureHandlerRootView>
+  )
+}
