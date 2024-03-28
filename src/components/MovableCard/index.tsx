@@ -1,4 +1,11 @@
-import Animated, { SharedValue, runOnJS, useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated, {
+  SharedValue,
+  runOnJS,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  useAnimatedReaction
+} from "react-native-reanimated";
 import { CARD_HEIGHT, Card, CardProps } from "../Card";
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useState } from "react";
@@ -15,6 +22,33 @@ export function MovableCard({ data, cardsPosition, scrollY, cardsCount }: Props)
   const [moving, setMoving] = useState(false);
   const top = useSharedValue(cardsPosition.value[data.id] * CARD_HEIGHT);
 
+  function objectMove(positions: number[], from: number, to: number) {
+    'worklet';
+    const newPositions = Object.assign({}, positions);
+
+    for (const id in positions) {
+      if (positions[id] === from) {
+        newPositions[id] = to;
+      }
+
+      if (positions[id] === to) {
+        newPositions[id] = from;
+      }
+    }
+
+    return newPositions;
+  }
+
+  useAnimatedReaction(() =>
+    cardsPosition.value[data.id],
+    (currentPosition, previousPosition) => {
+      if (currentPosition !== previousPosition) {
+        if (!moving) {
+          top.value = withSpring(currentPosition * CARD_HEIGHT)
+        }
+      }
+    }, [moving]);
+
   const longPressGesture = Gesture
     .LongPress()
     .onStart(() => {
@@ -24,15 +58,30 @@ export function MovableCard({ data, cardsPosition, scrollY, cardsCount }: Props)
 
   const panGesture = Gesture.Pan()
     .manualActivation(true)
-    .onTouchesDown((_, state) => {
+    .onTouchesMove((_, state) => {
       moving ? state.activate() : state.fail();
     })
     .onUpdate((event) => {
-      top.value = event.absoluteY + scrollY.value;
+      const positionY = event.absoluteY + scrollY.value;
+      top.value = positionY - CARD_HEIGHT;
+
+      const startPositionList = 0;
+      const endPositionList = cardsCount - 1;
+      const currentPosition = Math.floor(positionY / CARD_HEIGHT);
+
+      'worklet';
+      const newPosition = Math.max(startPositionList, Math.min(currentPosition, endPositionList));
+
+      if (newPosition !== cardsPosition.value[data.id]) {
+        cardsPosition.value = objectMove(cardsPosition.value, cardsPosition.value[data.id], newPosition);
+      }
     })
     .onFinalize(() => {
+      const newPosition = cardsPosition.value[data.id] * CARD_HEIGHT;
+      top.value = withSpring(newPosition);
       runOnJS(setMoving)(false);
     })
+    .simultaneousWithExternalGesture(longPressGesture)
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
